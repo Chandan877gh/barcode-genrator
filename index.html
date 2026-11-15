@@ -1,0 +1,134 @@
+The standalone code file has been generated and saved to your workspace as index.html.
+
+📄 Complete Standalone Code (index.html)
+You can copy the complete code block below directly into your GitHub Codespace:
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Barcode Generator</title>
+    <!-- Tailwind CSS for modern responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- JsBarcode library to generate standard Code128 barcodes in SVG -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+</head>
+<body class="bg-slate-50 flex flex-col items-center justify-center min-h-screen p-4 md:p-8">
+
+    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-slate-100 max-w-md w-full">
+        <h2 class="text-2xl font-extrabold mb-2 text-slate-800 text-center">Barcode Generator</h2>
+        <p class="text-slate-500 text-sm text-center mb-6">Generate standard Code128 formats for inventory & retail SKUs</p>
+
+        <!-- Input section -->
+        <div class="mb-5">
+            <label class="block text-slate-700 text-sm font-semibold mb-2" for="sku-input">
+                Enter SKU Code:
+            </label>
+            <input
+                id="sku-input"
+                type="text"
+                value="SKU-98765-XYZ"
+                placeholder="e.g. SKU-12345"
+                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono uppercase"
+            />
+        </div>
+
+        <!-- Trigger button -->
+        <button
+            onclick="generateBarcode()"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition duration-200 mb-6 shadow-md shadow-blue-200">
+            Generate Barcode
+        </button>
+
+        <!-- Output & Download section -->
+        <div class="flex flex-col items-center justify-center border-t border-slate-100 pt-6">
+            <div class="bg-slate-50 p-6 rounded-2xl border border-dashed border-slate-200 mb-6 flex items-center justify-center min-h-[140px] w-full">
+                <svg id="barcode" class="max-w-full"></svg>
+            </div>
+
+            <button
+                onclick="downloadBarcode()"
+                class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition duration-200 flex items-center justify-center gap-2 shadow-md shadow-emerald-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download PNG
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        function generateBarcode() {
+            const skuInput = document.getElementById('sku-input');
+            const skuVal = skuInput.value.trim().toUpperCase();
+            
+            if (skuVal === "") {
+                alert("Please enter a valid SKU");
+                return;
+            }
+
+            // Apply modern layout parameters to barcode
+            JsBarcode("#barcode", skuVal, {
+                format: "CODE128",
+                lineColor: "#0f172a",
+                width: 2.2,
+                height: 80,
+                displayValue: true,
+                fontSize: 14,
+                font: "monospace",
+                textMargin: 6
+            });
+        }
+
+        function downloadBarcode() {
+            const svgElement = document.getElementById('barcode');
+            const skuVal = document.getElementById('sku-input').value.trim().toUpperCase() || 'barcode';
+
+            // Build XML/SVG data string
+            const svgString = new XMLSerializer().serializeToString(svgElement);
+            const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+
+            img.onload = function() {
+                const bbox = svgElement.getBBox();
+                
+                // Configure Canvas dimensions
+                canvas.width = bbox.width + 30;
+                canvas.height = bbox.height + 30;
+
+                // Background setup
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Paint original SVG vector layer onto Canvas raster element
+                ctx.drawImage(img, 15, 15);
+
+                // Export layer data to downloadable URI
+                const pngUrl = canvas.toDataURL('image/png');
+                const downloadLink = document.createElement('a');
+                downloadLink.href = pngUrl;
+                downloadLink.download = `barcode_${skuVal}.png`;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            };
+
+            img.src = URL.createObjectURL(svgBlob);
+        }
+
+        // Auto-initialize layout on page mount
+        generateBarcode();
+    </script>
+</body>
+</html>
+🚀 Running in GitHub Codespace:
+Open your workspace folder in GitHub Codespaces.
+Create a file named index.html and paste the code block above.
+Run the following command in your terminal to start a server:
+python3 -m http.server 8000
+Codespaces will prompt a popup at the bottom right to "Open in Browser", click it to see the fully functional, beautiful barcode generator app live!
