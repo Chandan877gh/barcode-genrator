@@ -1,134 +1,465 @@
-The standalone code file has been generated and saved to your workspace as index.html.
-
-📄 Complete Standalone Code (index.html)
-You can copy the complete code block below directly into your GitHub Codespace:
-
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Barcode Generator</title>
-    <!-- Tailwind CSS for modern responsive styling -->
+    <title>High-SKU Barcode Generator</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- JsBarcode library to generate standard Code128 barcodes in SVG -->
+    <!-- JsBarcode -->
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <!-- JSZip to compress bulk generated barcodes on-the-fly -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- jsPDF to render barcodes inside crisp PDFs on the client-side -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-<body class="bg-slate-50 flex flex-col items-center justify-center min-h-screen p-4 md:p-8">
+<body class="bg-slate-50 flex flex-col items-center justify-start min-h-screen p-4 md:p-8">
 
-    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-slate-100 max-w-md w-full">
-        <h2 class="text-2xl font-extrabold mb-2 text-slate-800 text-center">Barcode Generator</h2>
-        <p class="text-slate-500 text-sm text-center mb-6">Generate standard Code128 formats for inventory & retail SKUs</p>
-
-        <!-- Input section -->
-        <div class="mb-5">
-            <label class="block text-slate-700 text-sm font-semibold mb-2" for="sku-input">
-                Enter SKU Code:
-            </label>
-            <input
-                id="sku-input"
-                type="text"
-                value="SKU-98765-XYZ"
-                placeholder="e.g. SKU-12345"
-                class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono uppercase"
-            />
+    <div class="max-w-5xl w-full flex flex-col gap-8">
+        <!-- Header -->
+        <div class="text-center">
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">SKU Barcode Generator</h1>
+            <p class="text-slate-500 text-sm mt-1">Create SKU barcodes</p>
         </div>
 
-        <!-- Trigger button -->
-        <button
-            onclick="generateBarcode()"
-            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition duration-200 mb-6 shadow-md shadow-blue-200">
-            Generate Barcode
-        </button>
+        <!-- Main Workspace Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- LEFT SIDE: CONTROLS (5 cols) -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+                
+                <!-- Section 1: Single Barcode Generator -->
+                <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 pb-2 border-b flex items-center gap-2">
+                        <span class="flex h-2 w-2 rounded-full bg-blue-500"></span>
+                        Single SKU Generator
+                    </h2>
+                    <div class="mb-4">
+                        <label class="block text-slate-600 text-xs font-bold uppercase tracking-wider mb-2" for="sku-input">
+                            SKU String
+                        </label>
+                        <input
+                            id="sku-input"
+                            type="text"
+                            value="SKU-98765-XYZ"
+                            placeholder="e.g. SKU-12345"
+                            class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono uppercase text-sm"
+                        />
+                    </div>
+                    <button
+                        onclick="generateSingleBarcode()"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl transition duration-150 shadow-md shadow-blue-200 text-sm">
+                        Generate Barcode
+                    </button>
+                </div>
 
-        <!-- Output & Download section -->
-        <div class="flex flex-col items-center justify-center border-t border-slate-100 pt-6">
-            <div class="bg-slate-50 p-6 rounded-2xl border border-dashed border-slate-200 mb-6 flex items-center justify-center min-h-[140px] w-full">
-                <svg id="barcode" class="max-w-full"></svg>
+                <!-- Section 2: CSV Bulk Uploader -->
+                <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-100">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 pb-2 border-b flex items-center gap-2">
+                        <span class="flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                        Bulk CSV Upload
+                    </h2>
+                    <div class="mb-4">
+                        <p class="text-xs text-slate-500 mb-3 leading-relaxed">
+                            Upload a CSV file with a column header named <strong>"SKU"</strong> or <strong>"sku"</strong>. Any extra columns will be ignored.
+                        </p>
+                        <label class="block w-full flex flex-col items-center px-4 py-4 bg-slate-50 text-slate-500 rounded-xl border border-dashed border-slate-300 cursor-pointer hover:bg-slate-100 transition duration-150">
+                            <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <span class="mt-1 text-xs font-semibold">Select CSV File</span>
+                            <input type='file' id="csv-file-input" accept=".csv" class="hidden" onchange="handleCsvUpload(event)" />
+                        </label>
+                        <div id="csv-file-status" class="text-xs text-emerald-600 font-semibold mt-2 hidden"></div>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <button
+                            id="download-pdf-btn"
+                            onclick="downloadAllBarcodesAsPdf()"
+                            disabled
+                            class="w-full bg-slate-400 cursor-not-allowed text-white font-bold py-2.5 px-4 rounded-xl transition duration-150 shadow-md flex items-center justify-center gap-2 text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Download Printable PDF Sheet
+                        </button>
+                        
+                        <button
+                            id="download-zip-btn"
+                            onclick="downloadAllBarcodesAsZip()"
+                            disabled
+                            class="w-full bg-slate-400 cursor-not-allowed text-white font-bold py-2.5 px-4 rounded-xl transition duration-150 shadow-md flex items-center justify-center gap-2 text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download ZIP (High-Res PNGs)
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <button
-                onclick="downloadBarcode()"
-                class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition duration-200 flex items-center justify-center gap-2 shadow-md shadow-emerald-100">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Download PNG
-            </button>
+            <!-- RIGHT SIDE: INTERACTIVE CANVAS/PREVIEW GRID (7 cols) -->
+            <div class="lg:col-span-7 flex flex-col gap-6">
+                
+                <!-- Single Preview Box -->
+                <div id="single-preview-card" class="bg-white p-6 rounded-2xl shadow-md border border-slate-100 flex flex-col items-center justify-center">
+                    <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4 self-start">Active Preview</h3>
+                    <div class="bg-slate-50 p-6 rounded-2xl border border-dashed border-slate-200 flex items-center justify-center min-h-[160px] w-full mb-4">
+                        <svg id="barcode" class="max-w-full"></svg>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 w-full">
+                        <button
+                            onclick="downloadSingleBarcodeAsPdf()"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl transition duration-150 flex items-center justify-center gap-2 text-sm shadow-md shadow-blue-100">
+                            Download PDF
+                        </button>
+                        <button
+                            onclick="downloadSingleBarcodeAsPng()"
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl transition duration-150 flex items-center justify-center gap-2 text-sm shadow-md shadow-emerald-100">
+                            Download PNG
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bulk Preview Box -->
+                <div id="bulk-preview-card" class="bg-white p-6 rounded-2xl shadow-md border border-slate-100 hidden">
+                    <div class="flex justify-between items-center mb-4 pb-2 border-b">
+                        <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider">Bulk Preview Grid (<span id="bulk-count">0</span> items)</h3>
+                        <button onclick="clearBulkQueue()" class="text-xs text-red-500 hover:underline">Clear Queue</button>
+                    </div>
+                    <div id="bulk-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-[350px] overflow-y-auto p-2 bg-slate-50 rounded-xl">
+                        <!-- Dynamic Barcode Previews Go Here -->
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 
-    <!-- JavaScript Logic -->
+    <!-- JavaScript Engine -->
     <script>
-        function generateBarcode() {
-            const skuInput = document.getElementById('sku-input');
-            const skuVal = skuInput.value.trim().toUpperCase();
-            
-            if (skuVal === "") {
-                alert("Please enter a valid SKU");
+        let bulkSkus = [];
+
+        // Helper options for JsBarcode configuration
+        const barcodeOptions = {
+            format: "CODE128",
+            lineColor: "#0f172a",
+            width: 2.2,
+            height: 70,
+            displayValue: true,
+            fontSize: 13,
+            font: "monospace",
+            textMargin: 4
+        };
+
+        // --- Single Generator Logics ---
+        function generateSingleBarcode() {
+            const inputElement = document.getElementById('sku-input');
+            const rawVal = inputElement.value.trim().toUpperCase();
+            if (!rawVal) {
+                alert("Please specify a SKU first!");
                 return;
             }
-
-            // Apply modern layout parameters to barcode
-            JsBarcode("#barcode", skuVal, {
-                format: "CODE128",
-                lineColor: "#0f172a",
-                width: 2.2,
-                height: 80,
-                displayValue: true,
-                fontSize: 14,
-                font: "monospace",
-                textMargin: 6
-            });
+            JsBarcode("#barcode", rawVal, barcodeOptions);
         }
 
-        function downloadBarcode() {
+        function downloadSingleBarcodeAsPng() {
             const svgElement = document.getElementById('barcode');
             const skuVal = document.getElementById('sku-input').value.trim().toUpperCase() || 'barcode';
-
-            // Build XML/SVG data string
-            const svgString = new XMLSerializer().serializeToString(svgElement);
-            const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const img = new Image();
-
-            img.onload = function() {
-                const bbox = svgElement.getBBox();
-                
-                // Configure Canvas dimensions
-                canvas.width = bbox.width + 30;
-                canvas.height = bbox.height + 30;
-
-                // Background setup
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                // Paint original SVG vector layer onto Canvas raster element
-                ctx.drawImage(img, 15, 15);
-
-                // Export layer data to downloadable URI
-                const pngUrl = canvas.toDataURL('image/png');
+            svgToPngDataUrl(svgElement, function(pngUrl) {
                 const downloadLink = document.createElement('a');
                 downloadLink.href = pngUrl;
                 downloadLink.download = `barcode_${skuVal}.png`;
                 document.body.appendChild(downloadLink);
                 downloadLink.click();
                 document.body.removeChild(downloadLink);
+            });
+        }
+
+        function downloadSingleBarcodeAsPdf() {
+            const svgElement = document.getElementById('barcode');
+            const skuVal = document.getElementById('sku-input').value.trim().toUpperCase() || 'barcode';
+            
+            svgToPngDataUrl(svgElement, function(pngUrl) {
+                const { jsPDF } = window.jspdf;
+                // Create vertical oriented custom smaller layout PDF
+                const doc = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'pt',
+                    format: [300, 150]
+                });
+                
+                // Paint white background
+                doc.setFillColor(255, 255, 255);
+                doc.rect(0, 0, 300, 150, 'F');
+                
+                // Add image scaled nicely inside label canvas
+                doc.addImage(pngUrl, 'PNG', 15, 15, 270, 120);
+                doc.save(`barcode_${skuVal}.pdf`);
+            });
+        }
+
+        // --- CSV Bulk Generation Logics ---
+        function handleCsvUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                parseAndRenderCsv(text, file.name);
+            };
+            reader.readAsText(file);
+        }
+
+        function parseAndRenderCsv(csvContent, filename) {
+            const lines = csvContent.split(/\r?\n/);
+            if (lines.length === 0) {
+                alert("The CSV file is empty!");
+                return;
+            }
+
+            // Parse headers and find the index for "SKU"
+            const headers = lines[0].split(',').map(h => h.trim().replace(/['"]/g, '').toUpperCase());
+            const skuIndex = headers.indexOf("SKU");
+
+            if (skuIndex === -1) {
+                alert("Error: CSV is missing a required column named 'SKU' (case-insensitive).");
+                return;
+            }
+
+            bulkSkus = [];
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                const columns = lines[i].split(',');
+                if (columns[skuIndex]) {
+                    const val = columns[skuIndex].trim().replace(/['"]/g, '').toUpperCase();
+                    if (val) {
+                        bulkSkus.push(val);
+                    }
+                }
+            }
+
+            if (bulkSkus.length === 0) {
+                alert("No SKUs found in the uploaded CSV.");
+                return;
+            }
+
+            // Update File Upload Status
+            const status = document.getElementById('csv-file-status');
+            status.textContent = `Imported ${bulkSkus.length} SKUs from ${filename}`;
+            status.classList.remove('hidden');
+
+            // Toggle Action buttons active styles
+            const zipBtn = document.getElementById('download-zip-btn');
+            const pdfBtn = document.getElementById('download-pdf-btn');
+            
+            zipBtn.disabled = false;
+            pdfBtn.disabled = false;
+            
+            zipBtn.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl transition duration-150 shadow-md flex items-center justify-center gap-2 text-sm cursor-pointer shadow-emerald-100";
+            pdfBtn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl transition duration-150 shadow-md flex items-center justify-center gap-2 text-sm cursor-pointer shadow-blue-100";
+
+            // Render Batch Grid
+            renderBulkGrid();
+        }
+
+        function renderBulkGrid() {
+            const grid = document.getElementById('bulk-grid');
+            grid.innerHTML = "";
+            document.getElementById('bulk-count').textContent = bulkSkus.length;
+            document.getElementById('bulk-preview-card').classList.remove('hidden');
+
+            bulkSkus.forEach((sku, idx) => {
+                // Create element container for visual presentation
+                const card = document.createElement('div');
+                card.className = "bg-white p-2 rounded-lg border border-slate-200 flex flex-col items-center justify-center shadow-sm";
+
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svg.id = `bulk-svg-${idx}`;
+                svg.className = "w-full max-h-16";
+
+                card.appendChild(svg);
+                grid.appendChild(card);
+
+                // Render individual barcode vector
+                try {
+                    JsBarcode(svg, sku, {
+                        ...barcodeOptions,
+                        width: 1.8,
+                        height: 40,
+                        fontSize: 10
+                    });
+                } catch(e) {
+                    console.error("Error creating barcode for " + sku, e);
+                }
+            });
+        }
+
+        function clearBulkQueue() {
+            bulkSkus = [];
+            document.getElementById('bulk-grid').innerHTML = "";
+            document.getElementById('bulk-preview-card').classList.add('hidden');
+            document.getElementById('csv-file-status').classList.add('hidden');
+            document.getElementById('csv-file-input').value = "";
+
+            const zipBtn = document.getElementById('download-zip-btn');
+            const pdfBtn = document.getElementById('download-pdf-btn');
+            
+            zipBtn.disabled = true;
+            pdfBtn.disabled = true;
+            
+            zipBtn.className = "w-full bg-slate-400 cursor-not-allowed text-white font-bold py-2.5 px-4 rounded-xl transition duration-150 shadow-md flex items-center justify-center gap-2 text-sm";
+            pdfBtn.className = "w-full bg-slate-400 cursor-not-allowed text-white font-bold py-2.5 px-4 rounded-xl transition duration-150 shadow-md flex items-center justify-center gap-2 text-sm";
+        }
+
+        // Converts temporary SVG element markup into an exportable high-quality canvas PNG Data URI
+        // IMPROVEMENT: Implements High-DPI Canvas scaling factor (4x) for crisp print resolutions
+        function svgToPngDataUrl(svgElement, callback) { 
+            const svgString = new XMLSerializer().serializeToString(svgElement);
+            const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+
+            img.onload = function() {
+                const bbox = svgElement.getBBox();
+                const scaleFactor = 4; // Increases resolution (300+ DPI equivalent)
+                
+                // Configure Scaled Canvas dimensions
+                canvas.width = (bbox.width + 30) * scaleFactor;
+                canvas.height = (bbox.height + 30) * scaleFactor;
+                
+                // Apply scale factor to coordinate system
+                ctx.scale(scaleFactor, scaleFactor);
+
+                // Render solid white background to avoid transparent pixelation artifacts
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, bbox.width + 30, bbox.height + 30);
+                
+                // Draw original barcode at high-resolution offset
+                ctx.drawImage(img, 15, 15);
+
+                const pngUrl = canvas.toDataURL('image/png', 1.0);
+                callback(pngUrl);
             };
 
             img.src = URL.createObjectURL(svgBlob);
         }
 
-        // Auto-initialize layout on page mount
-        generateBarcode();
+        // Builds multi-row grids of high-resolution barcodes inside structured printable PDFs
+        function downloadAllBarcodesAsPdf() {
+            if (bulkSkus.length === 0) return;
+            
+            const { jsPDF } = window.jspdf;
+            // Letter Page is 612 x 792 pt
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'pt',
+                format: 'letter'
+            });
+
+            const pdfBtn = document.getElementById('download-pdf-btn');
+            const originalHtml = pdfBtn.innerHTML;
+            pdfBtn.disabled = true;
+            pdfBtn.innerText = "Rendering PDF...";
+
+            const pageMargin = 36;
+            const colCount = 3;
+            const colWidth = (612 - (pageMargin * 2)) / colCount;
+            const rowHeight = 120;
+
+            let currentX = pageMargin;
+            let currentY = 70; // Offset downwards to clear title
+            let processedCount = 0;
+
+            // Add title layout block on the first page
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(20);
+            doc.setTextColor(30, 41, 59);
+            doc.text("Generated Inventory Barcodes", 612 / 2, 45, { align: "center" });
+
+            bulkSkus.forEach((sku, idx) => {
+                const svgElement = document.getElementById(`bulk-svg-${idx}`);
+                if (!svgElement) {
+                    processedCount++;
+                    return;
+                }
+
+                svgToPngDataUrl(svgElement, function(pngDataUrl) {
+                    // Add current high-resolution image to document grid
+                    doc.addImage(pngDataUrl, 'PNG', currentX + 5, currentY, colWidth - 10, 90);
+                    
+                    // Increment column pointer
+                    processedCount++;
+                    
+                    const isLastOfRow = (processedCount % colCount === 0);
+                    if (isLastOfRow) {
+                        currentX = pageMargin;
+                        currentY += rowHeight;
+                    } else {
+                        currentX += colWidth;
+                    }
+
+                    // Handle overflow onto secondary pages
+                    if (currentY + 100 > 792 && processedCount < bulkSkus.length) {
+                        doc.addPage();
+                        currentX = pageMargin;
+                        currentY = pageMargin; 
+                    }
+
+                    if (processedCount === bulkSkus.length) {
+                        doc.save("barcodes_sheet.pdf");
+                        pdfBtn.disabled = false;
+                        pdfBtn.innerHTML = originalHtml;
+                    }
+                });
+            });
+        }
+
+        // Multi-compiles array collection into a downloadable ZIP file structure
+        function downloadAllBarcodesAsZip() {
+            if (bulkSkus.length === 0) return;
+            
+            const zip = new JSZip();
+            let processedCount = 0;
+
+            const zipBtn = document.getElementById('download-zip-btn');
+            const originalHtml = zipBtn.innerHTML;
+            zipBtn.disabled = true;
+            zipBtn.innerText = "Processing ZIP...";
+
+            bulkSkus.forEach((sku, idx) => {
+                const svgElement = document.getElementById(`bulk-svg-${idx}`);
+                if (!svgElement) {
+                    processedCount++;
+                    return;
+                }
+
+                svgToPngDataUrl(svgElement, function(pngDataUrl) {
+                    const base64Data = pngDataUrl.replace(/^data:image\/png;base64,/, "");
+                    zip.file(`barcode_${sku}.png`, base64Data, { base64: true });
+                    processedCount++;
+
+                    if (processedCount === bulkSkus.length) {
+                        zip.generateAsync({ type: "blob" }).then(function(content) {
+                            const downloadLink = document.createElement('a');
+                            downloadLink.href = URL.createObjectURL(content);
+                            downloadLink.download = "bulk_barcodes.zip";
+                            document.body.appendChild(downloadLink);
+                            downloadLink.click();
+                            document.body.removeChild(downloadLink);
+                            
+                            zipBtn.disabled = false;
+                            zipBtn.innerHTML = originalHtml;
+                        });
+                    }
+                });
+            });
+        }
+
+        // Boot single-engine default barcode view
+        generateSingleBarcode();
     </script>
 </body>
 </html>
-🚀 Running in GitHub Codespace:
-Open your workspace folder in GitHub Codespaces.
-Create a file named index.html and paste the code block above.
-Run the following command in your terminal to start a server:
-python3 -m http.server 8000
-Codespaces will prompt a popup at the bottom right to "Open in Browser", click it to see the fully functional, beautiful barcode generator app live!
